@@ -1,0 +1,21 @@
+{
+  "name": "AMG Tracker Pro",
+  "short_name": "AMG Tracker",
+  "description": "Sistem Penjejakan Status Kerja Arif Maju Group",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#cc0000",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
