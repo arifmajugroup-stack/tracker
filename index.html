@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AMG Tracker - Cloud Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#cc0000">
+    
+    <style>
+        :root { 
+            --primary-red: #cc0000; 
+            --dark-red: #990000; 
+            --white: #ffffff; 
+            --text-dark: #333333; 
+            --green: #25D366; 
+        }
+
+        body { 
+            margin: 0; 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto;
+            /* Menggunakan fail lokal background.jpg */
+            background: #f0f2f5 url('background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .overlay { 
+            background: rgba(255, 255, 255, 0.85); 
+            min-height: 100vh; 
+            backdrop-filter: blur(8px); 
+            padding-bottom: 40px; 
+        }
+
+        header { 
+            text-align: center; 
+            padding: 20px; 
+            background: var(--white); 
+            border-bottom: 5px solid var(--primary-red); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+
+        .logo { max-width: 140px; height: auto; margin-bottom: 5px; }
+        
+        .container { 
+            width: 95%; max-width: 1100px; margin: 20px auto; padding: 20px; 
+            background: rgba(255, 255, 255, 0.95); 
+            border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        /* Navigasi */
+        .nav-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .nav-btn { flex: 1; padding: 15px 5px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; background: var(--primary-red); color: white; font-size: 0.85rem; transition: 0.3s; }
+        .nav-btn.admin { background: #444; }
+
+        /* Form */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: bold; color: var(--primary-red); font-size: 0.9rem; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+
+        /* Jadual */
+        .table-wrapper { overflow-x: auto; margin-top: 20px; border-radius: 10px; border: 1px solid #eee; background: white; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 650px; }
+        th { background: var(--primary-red); color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-weight: bold; background: #fff5f5; color: var(--primary-red); border: 1px solid var(--primary-red); font-size: 0.75rem; }
+        .admin-tag { font-size: 0.7rem; color: #777; display: block; margin-top: 4px; }
+
+        .btn-action { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.75rem; }
+        .btn-wa { background: var(--green); color: white; text-decoration: none; display: inline-block; }
+        .btn-del { background: #ff4444; color: white; }
+
+        .section { display: none; }
+        .active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (min-width: 768px) { .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; } }
+    </style>
+</head>
+<body>
+
+<div class="overlay">
+    <header>
+        <img src="logo.png" alt="Logo" class="logo">
+        <h1 style="margin:0; font-size: 1.2rem; color: var(--primary-red); letter-spacing: 1px;">ARIF MAJU GROUP</h1>
+    </header>
+
+    <div class="container">
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('customerSection')">👤 STATUS KERJA</button>
+            <button class="nav-btn admin" id="adminNavBtn">🔐 AKSES STAFF</button>
+        </div>
+
+        <div id="customerSection" class="section active">
+            <div style="max-width: 500px; margin: 0 auto; text-align: center;">
+                <h3>Semak Status Pesanan</h3>
+                <input type="tel" id="custSearchPhone" style="width:100%; padding:18px; border:2px solid var(--primary-red); border-radius:12px; box-sizing:border-box; text-align: center; font-size: 1.2rem;" placeholder="Masukkan No Telefon">
+                <button onclick="searchCustomerJobs()" style="width:100%; padding:15px; background:var(--primary-red); color:white; border:none; border-radius:12px; font-weight:bold; margin-top:15px; cursor:pointer;">SEMAK SEKARANG</button>
+                <div id="customerResults"></div>
+            </div>
+        </div>
+
+        <div id="loginSection" class="section">
+            <div style="max-width: 400px; margin: 0 auto;">
+                <h3 style="text-align:center">Staff Login</h3>
+                <div class="form-group"><input type="email" id="loginEmail" placeholder="Email Terdaftar"></div>
+                <div class="form-group"><input type="password" id="loginPass" placeholder="Kataluan"></div>
+                <button id="doLoginBtn" style="width:100%; padding:12px; background:#444; color:white; border:none; border-radius:8px; cursor:pointer;">MASUK SISTEM</button>
+            </div>
+        </div>
+
+        <div id="adminSection" class="section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:12px; border-radius:10px;">
+                <span style="font-size:0.8rem;">Akaun: <b id="adminEmailDisplay"></b></span>
+                <div>
+                    <button onclick="showSection('directorySection')" class="btn-action" style="background:#555; color:white;">DIREKTORI</button>
+                    <button id="doLogoutBtn" class="btn-action btn-del">LOGOUT</button>
+                </div>
+            </div>
+
+            <form id="jobForm" style="background:#fffcfc; padding:20px; border:1px solid #ffdcdc; border-radius:12px; margin-bottom: 25px;">
+                <div class="grid-inputs">
+                    <div class="form-group">
+                        <label>Nama Pelanggan:</label>
+                        <input type="text" id="adName" list="customerList" placeholder="Taip nama..." required>
+                        <datalist id="customerList"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>No. Telefon:</label>
+                        <input type="tel" id="adPhone" list="phoneList" placeholder="0123456789" required>
+                        <datalist id="phoneList"></datalist>
+                    </div>
+                </div>
+                <div class="form-group"><label>Nama Projek / Item:</label><input type="text" id="adJobName" placeholder="Contoh: Banner Kedai" required></div>
+                <div class="grid-inputs">
+                    <div class="form-group"><label>Jangkaan Siap:</label><input type="date" id="adDate"></div>
+                    <div class="form-group">
+                        <label>Status Kerja:</label>
+                        <select id="adStatus">
+                            <option>Dalam Giliran</option><option>Sedang Disemak</option><option>Proses Design</option>
+                            <option>Proses Cetak</option><option>Proses Welding</option><option>Proses Tampal</option><option>Siap</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" style="width:100%; padding:15px; background:var(--primary-red); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">+ SIMPAN DATA KE CLOUD</button>
+            </form>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Pelanggan</th><th>Projek</th><th>Jangkaan</th><th>Status & Audit</th><th>Tindakan</th></tr>
+                    </thead>
+                    <tbody id="adminTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="directorySection" class="section">
+            <h3>Senarai Pelanggan Tetap</h3>
+            <button onclick="showSection('adminSection')" class="nav-btn" style="background:#555; margin-bottom:15px; max-width: 150px;">← KEMBALI</button>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Nama Pelanggan</th><th>No. Telefon</th><th>Tindakan</th></tr></thead>
+                    <tbody id="directoryTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAQy5m_5eCQn933gsbugq8Fg0AiRTu3CKo",
+        authDomain: "track-job-progress.firebaseapp.com",
+        projectId: "track-job-progress",
+        storageBucket: "track-job-progress.firebasestorage.app",
+        messagingSenderId: "463137015561",
+        appId: "1:463137015561:web:f5bafcd445d804a3a0f5d8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let jobs = [];
+    let customers = [];
+    let currentUser = null;
+    let unsubscribeJobs = null;
+    let unsubscribeCustomers = null;
+
+    const statusOptions = ["Dalam Giliran", "Sedang Disemak", "Proses Design", "Proses Cetak", "Proses Welding", "Proses Tampal", "Siap"];
+
+    // --- NAVIGATION ---
+    window.showSection = (id) => {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'directorySection') renderDirectory();
+    };
+
+    // --- AUTH & REAL-TIME SYNC ---
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        if(user) {
+            document.getElementById('adminEmailDisplay').innerText = user.email.split('@')[0].toUpperCase();
+            showSection('adminSection');
+
+            if(!unsubscribeJobs) {
+                unsubscribeJobs = onSnapshot(query(collection(db, "jobs"), orderBy("createdAt", "desc")), (snapshot) => {
+                    jobs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderAdminTable();
+                });
+            }
+            if(!unsubscribeCustomers) {
+                unsubscribeCustomers = onSnapshot(collection(db, "customers"), (snapshot) => {
+                    customers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    updateDatalists();
+                    if(document.getElementById('directorySection').classList.contains('active')) renderDirectory(); 
+                });
+            }
+        } else {
+            showSection('customerSection');
+            if(unsubscribeJobs) { unsubscribeJobs(); unsubscribeJobs = null; }
+            if(unsubscribeCustomers) { unsubscribeCustomers(); unsubscribeCustomers = null; }
+            jobs = [];
+            customers = [];
+        }
+    });
+
+    // Auth Actions
+    document.getElementById('adminNavBtn').onclick = () => currentUser ? showSection('adminSection') : showSection('loginSection');
+    document.getElementById('doLogoutBtn').onclick = () => signOut(auth);
+    document.getElementById('doLoginBtn').onclick = () => {
+        const e = document.getElementById('loginEmail').value;
+        const p = document.getElementById('loginPass').value;
+        signInWithEmailAndPassword(auth, e, p).catch(err => alert("Akses Ditolak: " + err.message));
+    };
+
+    function updateDatalists() {
+        document.getElementById('customerList').innerHTML = customers.map(c => c.name ? `<option value="${c.name}">` : '').join('');
+        document.getElementById('phoneList').innerHTML = customers.map(c => c.phone ? `<option value="${c.phone}">` : '').join('');
+    }
+
+    // --- AUTOFILL LOGIC (Dibaiki) ---
+    document.getElementById('adName').addEventListener('input', (e) => {
+        const inputName = e.target.value.trim().toLowerCase();
+        if(!inputName) return;
+        const match = customers.find(c => c.name && String(c.name).toLowerCase() === inputName);
+        if(match) document.getElementById('adPhone').value = match.phone;
+    });
+
+    document.getElementById('adPhone').addEventListener('input', (e) => {
+        const inputPhone = e.target.value.replace(/\s|-/g, ''); 
+        if(!inputPhone) return;
+        const match = customers.find(c => c.phone && String(c.phone) === inputPhone);
+        if(match) document.getElementById('adName').value = match.name;
+    });
+
+    // --- CRUD ACTIONS ---
+    document.getElementById('jobForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const phone = document.getElementById('adPhone').value.replace(/\s|-/g, '');
+        const name = document.getElementById('adName').value.trim(); 
+
+        const newJob = {
+            phone, name,
+            jobName: document.getElementById('adJobName').value,
+            date: document.getElementById('adDate').value || "Segera",
+            status: document.getElementById('adStatus').value,
+            updatedBy: currentUser.email.split('@')[0],
+            updatedAt: new Date().toLocaleString('ms-MY'),
+            createdAt: Date.now()
+        };
+
+        try {
+            await addDoc(collection(db, "jobs"), newJob);
+            if(!customers.find(c => c.phone === phone)) {
+                await addDoc(collection(db, "customers"), { name, phone });
+            }
+            e.target.reset();
+            alert("Berjaya disimpan ke Cloud!");
+        } catch (err) { alert("Ralat: " + err.message); }
+    };
+
+    window.inlineUpdateStatus = async (id, newStatus) => {
+        await updateDoc(doc(db, "jobs", id), { 
+            status: newStatus, 
+            updatedBy: currentUser.email.split('@')[0],
+            updatedAt: new Date().toLocaleString('ms-MY')
+        });
+    };
+
+    window.deleteJob = async (id) => { if(confirm("Padam data ini?")) await deleteDoc(doc(db, "jobs", id)); };
+    window.deleteCust = async (id) => { if(confirm("Padam pelanggan?")) await deleteDoc(doc(db, "customers", id)); };
+
+    // --- RENDERING ---
+    function renderAdminTable() {
+        document.getElementById('adminTableBody').innerHTML = jobs.map(j => `
+            <tr>
+                <td><strong>${j.name}</strong><br><small>${j.phone}</small></td>
+                <td>${j.jobName}</td>
+                <td>${j.date}</td>
+                <td>
+                    <span class="status-badge">${j.status}</span>
+                    <span class="admin-tag">👤 ${j.updatedBy}</span>
+                    <span class="admin-tag">⏰ ${j.updatedAt}</span>
+                </td>
+                <td>
+                    <div style="display:flex; flex-direction:column; gap:5px;">
+                        <select onchange="inlineUpdateStatus('${j.id}', this.value)" style="font-size:11px;">
+                            ${statusOptions.map(opt => `<option value="${opt}" ${j.status === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                        </select>
+                        <button class="btn-action btn-del" onclick="deleteJob('${j.id}')">PADAM</button>
+                        ${j.status === 'Siap' ? `<button class="btn-action btn-wa" onclick="sendWhatsApp('${j.phone}', '${j.name}', '${j.jobName}')">WHATSAPP</button>` : ''}
+                    </div>
+                </td>
+            </tr>`).join('');
+    }
+
+    function renderDirectory() {
+        document.getElementById('directoryTableBody').innerHTML = customers.map(c => `
+            <tr>
+                <td>${c.name}</td>
+                <td>${c.phone}</td>
+                <td><button class="btn-action btn-del" onclick="deleteCust('${c.id}')">Hapus</button></td>
+            </tr>`).join('');
+    }
+
+    // --- EXTERNAL FUNCTIONS ---
+    window.sendWhatsApp = (phone, name, jobName) => {
+        const msg = `Salam ${name}, tempahan *${jobName}* anda telah SIAP di ARIF MAJU GROUP. Boleh ambil di kedai. Terima kasih!`;
+        window.open(`https://wa.me/6${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    window.searchCustomerJobs = () => {
+        const p = document.getElementById('custSearchPhone').value.replace(/\s|-/g, '');
+        const res = jobs.filter(j => j.phone === p);
+        const resDiv = document.getElementById('customerResults');
+        if(!p) return;
+        resDiv.innerHTML = res.length ? `<div style="margin-top:20px; border:2px solid var(--primary-red); padding:15px; border-radius:12px; background:white; text-align:left;">` + res.map(j => `
+            <div style="margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px;">
+                <b style="color:var(--primary-red)">${j.jobName}</b><br>
+                Status: <span class="status-badge">${j.status}</span><br>
+                <small>Kemas kini: ${j.updatedAt}</small>
+            </div>`).join('') + `</div>` : "<p style='color:red; font-weight:bold; margin-top:20px;'>Maaf, no telefon tidak ditemui.</p>";
+    };
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log("SW error", err));
+    }
+</script>
+</body>
+</html>
